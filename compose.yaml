@@ -1,0 +1,63 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:${HA_VERSION:-stable}
+    restart: unless-stopped
+    network_mode: host
+    stop_grace_period: 60s
+    environment:
+      TZ: Europe/Kyiv
+    volumes:
+      - homeassistant_config:/config
+    configs:
+      - source: homeassistant_configuration
+        target: /config/configuration.yaml
+    depends_on:
+      matter-server:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/', timeout=5).close()"
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  matter-server:
+    image: ghcr.io/matter-js/matterjs-server:${MATTER_VERSION:-stable}
+    restart: unless-stopped
+    network_mode: host
+    stop_grace_period: 60s
+    environment:
+      TZ: Europe/Kyiv
+      STORAGE_PATH: /data
+      LISTEN_ADDRESS: "127.0.0.1"
+      PORT: "5580"
+      PRIMARY_INTERFACE: "${LAN_INTERFACE:?Set LAN_INTERFACE to the Ubuntu LAN interface}"
+    volumes:
+      - matter_data:/data
+    # The upstream image provides its own health check.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+configs:
+  homeassistant_configuration:
+    file: ./homeassistant/configuration.yaml
+
+# Explicit names keep data independent of Coolify's Compose project name.
+# Use a different STACK_ID for a separate installation (on another host).
+volumes:
+  homeassistant_config:
+    name: ${STACK_ID:-homeassistant}_config
+  matter_data:
+    name: ${STACK_ID:-homeassistant}_matter

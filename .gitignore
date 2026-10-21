@@ -1,0 +1,29 @@
+# Local variables and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+*credentials*
+*secrets*
+*.private
+.private/
+
+# Runtime data and backups must stay out of Git
+data/
+backups/
+*.db
+*.db-*
+*.sqlite*
+*.tar
+*.tar.gz
+.storage/
+*.log
+
+# Editor and macOS files
+.DS_Store
+.idea/
+.vscode/
+._*
