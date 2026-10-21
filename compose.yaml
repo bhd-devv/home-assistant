@@ -8,9 +8,21 @@ services:
       TZ: Europe/Kyiv
     volumes:
       - homeassistant_config:/config
-    configs:
-      - source: homeassistant_configuration
-        target: /config/configuration.yaml
+    # Coolify checks out Git inside its helper container. Avoid file mounts
+    # from that temporary checkout: the Ubuntu Docker daemon cannot see them.
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        cat > /config/configuration.yaml.tmp <<'YAML'
+        # Managed by compose.yaml; regenerated on each container start.
+        default_config:
+
+        recorder:
+          purge_keep_days: 90
+          auto_purge: true
+        YAML
+        mv /config/configuration.yaml.tmp /config/configuration.yaml
+        exec /init
     depends_on:
       matter-server:
         condition: service_started
@@ -49,10 +61,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-configs:
-  homeassistant_configuration:
-    file: ./homeassistant/configuration.yaml
 
 # Explicit names keep data independent of Coolify's Compose project name.
 # Use a different STACK_ID for a separate installation (on another host).

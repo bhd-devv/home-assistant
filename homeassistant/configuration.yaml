@@ -1,6 +1,0 @@
-# Managed in Git and mounted read-only by Compose. Edit here, then redeploy.
-default_config:
-
-recorder:
-  purge_keep_days: 90
-  auto_purge: true
